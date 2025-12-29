@@ -1,12 +1,10 @@
-import { useState, useEffect } from 'react'; // 1. Import useEffect
-import { Outlet, Link, useLocation, useNavigate, useParams } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { MessageCircle, Wind, Book, User, PlusCircle, Menu, X, LogOut, Brain, Loader } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 const AppLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
-
-  // 2. Add state for chats and loading status
   const [chats, setChats] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -14,8 +12,7 @@ const AppLayout = () => {
   const navigate = useNavigate();
   const { logout, user } = useAuth();
 
-  // Helper to check if we are on a specific chat ID (useful for highlighting)
-  // Assuming your route is /app/chat/:chatId
+  // Helper to check current chat ID
   const currentChatId = location.pathname.split('/app/chat/')[1];
 
   const navItems = [
@@ -25,12 +22,11 @@ const AppLayout = () => {
     { path: '/app/profile', icon: User, label: 'Profile' },
   ];
 
-  // 3. Fetch chats from Backend
+  // Fetch chats from Backend
   useEffect(() => {
     const fetchChats = async () => {
       try {
         const token = localStorage.getItem("token");
-        // Replace with your actual Backend API endpoint
         const response = await fetch('http://localhost:5000/api/chats', {
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -40,7 +36,7 @@ const AppLayout = () => {
 
         if (response.ok) {
           const data = await response.json();
-          setChats(data); // Assuming data is an array of chat objects
+          setChats(data);
         } else {
           console.error("Failed to fetch chats");
         }
@@ -52,7 +48,7 @@ const AppLayout = () => {
     };
 
     if (user) fetchChats();
-  }, [user]); // Re-run if user changes
+  }, [user, location.pathname]); // Re-fetch or re-render when path changes helps keep order correct
 
   const handleLogout = () => {
     localStorage.removeItem("token");
@@ -60,11 +56,9 @@ const AppLayout = () => {
     navigate('/');
   };
 
-  // 4. Handle clicking a specific chat
   const openChat = (chatId) => {
     navigate(`/app/chat/${chatId}`);
-    // On mobile, you might want to auto-close sidebar here:
-    // setSidebarOpen(false); 
+    // Optional: setSidebarOpen(false) on mobile
   };
 
   const handleNewChat = () => {
@@ -77,72 +71,74 @@ const AppLayout = () => {
         className={`${sidebarOpen ? 'w-64' : 'w-0'
           } bg-gray-950 border-r border-gray-800 transition-all duration-300 flex flex-col overflow-hidden`}
       >
-        {/* 1. FIXED HEADER */}
-        <div className="p-4 border-b border-gray-800 flex items-center justify-between flex-shrink-0">
+        {/* 1. COMPACT HEADER */}
+        <div className="p-3 border-b border-gray-800 flex items-center justify-between flex-shrink-0">
           <div className="flex items-center space-x-2">
-            <Brain className="w-6 h-6 text-blue-400" />
-            <span className="font-bold text-lg">Calmly</span>
+            <Brain className="w-5 h-5 text-blue-400" />
+            <span className="font-bold text-base">Calmly</span>
           </div>
         </div>
 
-        {/* 2. NEW CHAT BUTTON (Fixed at top) */}
-        <div className="p-4 flex-shrink-0">
+        {/* 2. NEW CHAT BUTTON */}
+        <div className="p-3 flex-shrink-0">
           <button
             onClick={handleNewChat}
-            className="w-full py-3 bg-gradient-to-r from-blue-500 to-purple-500 rounded-xl font-semibold hover:shadow-lg hover:shadow-blue-500/30 transition-all flex items-center justify-center space-x-2 group"
+            className="w-full py-2 bg-gradient-to-r from-blue-500 to-purple-500 rounded-lg font-medium text-sm hover:shadow-lg hover:shadow-blue-500/30 transition-all flex items-center justify-center space-x-2 group"
           >
-            <PlusCircle className="w-5 h-5" />
+            <PlusCircle className="w-4 h-4" />
             <span>New Chat</span>
           </button>
         </div>
 
-        {/* 3. SCROLLABLE RECENT CHATS (Takes remaining space) */}
-        <div className="flex-1 overflow-y-auto px-4 py-2 min-h-0">
+        {/* 3. SCROLLABLE RECENT CHATS (Hidden Scrollbar) */}
+        <div className="flex-1 overflow-y-auto px-3 py-1 min-h-0 [&::-webkit-scrollbar]:hidden [scrollbar-width:none]">
           <div className="mb-2">
-            <h3 className="text-xs uppercase tracking-wider text-gray-500 mb-2 px-2">Recent Chats</h3>
-            <div className="space-y-1">
+            <h3 className="text-[10px] uppercase tracking-wider text-gray-500 mb-2 px-2 font-semibold">Recent Chats</h3>
+            <div className="space-y-0.5">
               {isLoading ? (
-                <div className="flex justify-center p-4 text-gray-500">
-                  <Loader className="w-5 h-5 animate-spin" />
+                <div className="flex justify-center p-2 text-gray-500">
+                  <Loader className="w-4 h-4 animate-spin" />
                 </div>
               ) : chats.length > 0 ? (
                 chats.map((chat) => (
                   <button
                     key={chat.id}
                     onClick={() => openChat(chat.id)}
-                    className={`w-full text-left px-3 py-2 rounded-lg transition-colors text-sm truncate
-                ${currentChatId === String(chat.id)
+                    className={`w-full text-left px-3 py-1.5 rounded-md transition-colors text-xs truncate
+                      ${currentChatId === String(chat.id)
                         ? 'bg-gray-800 text-white border border-gray-700'
-                        : 'text-gray-300 hover:bg-gray-800 hover:text-white'
+                        : 'text-gray-400 hover:bg-gray-900 hover:text-gray-200'
                       }`}
                   >
                     {chat.title || 'Untitled Chat'}
                   </button>
                 ))
               ) : (
-                <p className="px-3 text-xs text-gray-500 italic">No recent chats</p>
+                <p className="px-3 text-[10px] text-gray-600 italic">No recent chats</p>
               )}
             </div>
           </div>
         </div>
 
-        {/* 4. FIXED NAVIGATION (Pinned to bottom) */}
-        <div className="p-4 border-t border-gray-800 flex-shrink-0 bg-gray-950 z-10">
-          <h3 className="text-xs uppercase tracking-wider text-gray-500 mb-2 px-2">Navigation</h3>
-          <div className="space-y-1">
+        {/* 4. FIXED NAVIGATION (Bottom Left) */}
+        <div className="p-3 border-t border-gray-800 flex-shrink-0 bg-gray-950 z-10">
+          <h3 className="text-[10px] uppercase tracking-wider text-gray-500 mb-2 px-2 font-semibold">Navigation</h3>
+          <div className="space-y-0.5">
             {navItems.map((item) => {
               const Icon = item.icon;
+              // Highlight if path matches OR if it's a sub-route of chat
               const isActive = location.pathname === item.path || (item.path === '/app/chat' && location.pathname.startsWith('/app/chat/'));
+
               return (
                 <Link
                   key={item.path}
                   to={item.path}
-                  className={`flex items-center space-x-3 px-3 py-2 rounded-lg transition-all ${isActive
-                    ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30'
-                    : 'hover:bg-gray-800 text-gray-300 hover:text-white'
+                  className={`flex items-center space-x-3 px-3 py-1.5 rounded-md transition-all text-xs ${isActive
+                    ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20'
+                    : 'hover:bg-gray-900 text-gray-400 hover:text-gray-200'
                     }`}
                 >
-                  <Icon className="w-5 h-5" />
+                  <Icon className="w-4 h-4" />
                   <span>{item.label}</span>
                 </Link>
               );
@@ -150,37 +146,37 @@ const AppLayout = () => {
           </div>
         </div>
 
-        {/* 5. USER PROFILE FOOTER (Already fixed) */}
-        <div className="p-4 border-t border-gray-800 flex-shrink-0">
-          <div className="flex items-center space-x-3 mb-3 px-2">
+        {/* 5. COMPACT USER PROFILE FOOTER */}
+        <div className="p-3 border-t border-gray-800 flex-shrink-0">
+          <div className="flex items-center space-x-3 mb-3 px-1">
             <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full flex items-center justify-center">
               <User className="w-4 h-4" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium truncate">{user?.name || 'User'}</p>
-              <p className="text-xs text-gray-500 truncate">{user?.email}</p>
+              <p className="text-xs font-medium truncate">{user?.name || 'User'}</p>
+              <p className="text-[10px] text-gray-500 truncate">{user?.email}</p>
             </div>
           </div>
           <button
             onClick={handleLogout}
-            className="w-full flex items-center justify-center space-x-2 px-3 py-2 bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 text-red-400 rounded-lg transition-all"
+            className="w-full flex items-center justify-center space-x-2 px-2 py-1.5 bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 text-red-400 rounded-md transition-all text-xs"
           >
-            <LogOut className="w-4 h-4" />
+            <LogOut className="w-3 h-3" />
             <span>Logout</span>
           </button>
         </div>
       </aside>
 
+      {/* Main Content Area */}
       <div className="flex-1 flex flex-col overflow-hidden">
-        <header className="h-16 bg-gray-950 border-b border-gray-800 flex items-center justify-between px-6">
+        <header className="h-14 bg-gray-950 border-b border-gray-800 flex items-center justify-between px-4">
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="p-2 hover:bg-gray-800 rounded-lg transition-colors"
+            className="p-1.5 hover:bg-gray-800 rounded-lg transition-colors"
           >
-            {sidebarOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </button>
           <div className="text-sm text-gray-400">
-            {/* Dynamic Header Label */}
             {navItems.find(item => item.path === location.pathname)?.label || 'Calmly'}
           </div>
         </header>
