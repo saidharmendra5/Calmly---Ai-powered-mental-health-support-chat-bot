@@ -24,7 +24,7 @@ const Register = () => {
     setApiError('');
 
     try {
-      const response = await fetch('/api/auth/register', {
+      const response = await fetch('http://localhost:5000/api/auth/register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -34,16 +34,16 @@ const Register = () => {
 
       const result = await response.json();
 
-      if (!response.ok || !result.success) {
+      if (!response.ok) {
         throw new Error(result.message || 'Registration failed');
       }
 
-      registerUser({
-        user: result.user,
-        token: result.token,
-      });
+      // registerUser({
+      //   user: result.user,
+      //   token: result.token,
+      // });
 
-      navigate('/app/chat');
+      navigate('/login');
     } catch (error) {
       setApiError(error.message);
     } finally {
@@ -169,11 +169,11 @@ const Register = () => {
                   type="tel"
                   className="w-full pl-12 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-400/20 transition-all text-white placeholder-gray-500"
                   placeholder="+91 1234567890"
-                  {...register('phoneNumber', { required: 'Phone number is required' })}
+                  {...register('phone', { required: 'Phone number is required' })}
                 />
               </div>
-              {errors.phoneNumber && (
-                <p className="text-red-400 text-sm mt-1">{errors.phoneNumber.message}</p>
+              {errors.phone && (
+                <p className="text-red-400 text-sm mt-1">{errors.phone.message}</p>
               )}
             </div>
 
@@ -192,11 +192,11 @@ const Register = () => {
                       type="text"
                       className="w-full pl-12 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-400/20 transition-all text-white placeholder-gray-500"
                       placeholder="Emergency contact name"
-                      {...register('emergencyContactName', { required: 'Emergency contact name is required' })}
+                      {...register('emergencyName', { required: 'Emergency contact name is required' })}
                     />
                   </div>
-                  {errors.emergencyContactName && (
-                    <p className="text-red-400 text-sm mt-1">{errors.emergencyContactName.message}</p>
+                  {errors.emergencyName && (
+                    <p className="text-red-400 text-sm mt-1">{errors.emergencyName.message}</p>
                   )}
                 </div>
 
@@ -208,11 +208,11 @@ const Register = () => {
                       type="tel"
                       className="w-full pl-12 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-400/20 transition-all text-white placeholder-gray-500"
                       placeholder="+91 1234567890"
-                      {...register('emergencyContactPhone', { required: 'Emergency contact phone is required' })}
+                      {...register('emergencyPhone', { required: 'Emergency contact phone is required' })}
                     />
                   </div>
-                  {errors.emergencyContactPhone && (
-                    <p className="text-red-400 text-sm mt-1">{errors.emergencyContactPhone.message}</p>
+                  {errors.emergencyPhone && (
+                    <p className="text-red-400 text-sm mt-1">{errors.emergencyPhone.message}</p>
                   )}
                 </div>
               </div>

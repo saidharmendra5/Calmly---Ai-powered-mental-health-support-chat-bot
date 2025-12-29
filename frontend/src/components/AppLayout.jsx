@@ -18,6 +18,7 @@ const AppLayout = () => {
   ];
 
   const handleLogout = () => {
+    localStorage.removeItem("token");
     logout();
     navigate('/');
   };
@@ -25,14 +26,13 @@ const AppLayout = () => {
   return (
     <div className="flex h-screen bg-gray-900 text-white overflow-hidden">
       <aside
-        className={`${
-          sidebarOpen ? 'w-64' : 'w-0'
-        } bg-gray-950 border-r border-gray-800 transition-all duration-300 flex flex-col overflow-hidden`}
+        className={`${sidebarOpen ? 'w-64' : 'w-0'
+          } bg-gray-950 border-r border-gray-800 transition-all duration-300 flex flex-col overflow-hidden`}
       >
         <div className="p-4 border-b border-gray-800 flex items-center justify-between">
           <div className="flex items-center space-x-2">
             <Brain className="w-6 h-6 text-blue-400" />
-            <span className="font-bold text-lg">MindfulSpace</span>
+            <span className="font-bold text-lg">Calmly</span>
           </div>
         </div>
 
@@ -71,11 +71,10 @@ const AppLayout = () => {
                   <Link
                     key={item.path}
                     to={item.path}
-                    className={`flex items-center space-x-3 px-3 py-2 rounded-lg transition-all ${
-                      isActive
-                        ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30'
-                        : 'hover:bg-gray-800 text-gray-300 hover:text-white'
-                    }`}
+                    className={`flex items-center space-x-3 px-3 py-2 rounded-lg transition-all ${isActive
+                      ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30'
+                      : 'hover:bg-gray-800 text-gray-300 hover:text-white'
+                      }`}
                   >
                     <Icon className="w-5 h-5" />
                     <span>{item.label}</span>
@@ -115,7 +114,7 @@ const AppLayout = () => {
             {sidebarOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
           </button>
           <div className="text-sm text-gray-400">
-            {navItems.find(item => item.path === location.pathname)?.label || 'MindfulSpace'}
+            {navItems.find(item => item.path === location.pathname)?.label || 'Calmly'}
           </div>
         </header>
 

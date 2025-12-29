@@ -1,28 +1,66 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { User, Mail, Phone, UserPlus, Edit2, Save, Shield, Bell, Lock } from 'lucide-react';
+import { User, Mail, Phone, UserPlus, Shield, Bell, Lock, Loader2 } from 'lucide-react';
 
 const Profile = () => {
-  const { user } = useAuth();
-  const [isEditing, setIsEditing] = useState(false);
-  const [formData, setFormData] = useState({
-    name: user?.name || '',
-    email: user?.email || '',
-    phone: user?.phone || '',
-    emergencyContactName: user?.emergencyContact?.name || '',
-    emergencyContactPhone: user?.emergencyContact?.phone || ''
+  const { user: authUser } = useAuth();
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [profileData, setProfileData] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    emergencyContactName: '',
+    emergencyContactPhone: ''
   });
 
-  const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
-    });
-  };
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const token = localStorage.getItem("token");
 
-  const handleSave = () => {
-    setIsEditing(false);
-  };
+        const response = await fetch(
+          "http://localhost:5000/api/users/me",
+          {
+            method: "GET",
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch profile information");
+        }
+
+        const data = await response.json();
+
+        setProfileData({
+          name: data.full_name || "",
+          email: data.email || "",
+          phone: data.phone || "",
+          emergencyContactName: data.emergency_contact_name || "",
+          emergencyContactPhone: data.emergency_contact_phone || "",
+        });
+
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProfile();
+  }, []);
+
+
+  if (loading) {
+    return (
+      <div className="h-full bg-gray-900 flex items-center justify-center">
+        <Loader2 className="w-12 h-12 text-blue-500 animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="h-full bg-gray-900 overflow-y-auto">
@@ -34,6 +72,12 @@ const Profile = () => {
           </p>
         </div>
 
+        {error && (
+          <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400">
+            {error}
+          </div>
+        )}
+
         <div className="bg-gray-800/50 border border-gray-700 rounded-3xl p-8 mb-6">
           <div className="flex items-center justify-between mb-8">
             <div className="flex items-center space-x-4">
@@ -41,26 +85,11 @@ const Profile = () => {
                 <User className="w-10 h-10 text-white" />
               </div>
               <div>
-                <h2 className="text-2xl font-bold">{formData.name}</h2>
-                <p className="text-gray-400">{formData.email}</p>
+                <h2 className="text-2xl font-bold">{profileData.name}</h2>
+                <p className="text-gray-400">{profileData.email}</p>
               </div>
             </div>
-            <button
-              onClick={() => isEditing ? handleSave() : setIsEditing(true)}
-              className="px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-500 rounded-xl font-semibold hover:shadow-lg hover:shadow-blue-500/30 transition-all flex items-center space-x-2"
-            >
-              {isEditing ? (
-                <>
-                  <Save className="w-5 h-5" />
-                  <span>Save Changes</span>
-                </>
-              ) : (
-                <>
-                  <Edit2 className="w-5 h-5" />
-                  <span>Edit Profile</span>
-                </>
-              )}
-            </button>
+            {/* Edit button removed entirely */}
           </div>
 
           <div className="space-y-6">
@@ -70,11 +99,9 @@ const Profile = () => {
                 <User className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
                 <input
                   type="text"
-                  name="name"
-                  value={formData.name}
-                  onChange={handleChange}
-                  disabled={!isEditing}
-                  className="w-full pl-12 pr-4 py-3 bg-gray-900/50 border border-gray-700 rounded-xl focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-400/20 transition-all text-white placeholder-gray-500 disabled:opacity-60"
+                  value={profileData.name}
+                  readOnly
+                  className="w-full pl-12 pr-4 py-3 bg-gray-900/50 border border-gray-700 rounded-xl text-white placeholder-gray-500 opacity-80 cursor-default focus:outline-none"
                 />
               </div>
             </div>
@@ -85,11 +112,9 @@ const Profile = () => {
                 <Mail className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
                 <input
                   type="email"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleChange}
-                  disabled={!isEditing}
-                  className="w-full pl-12 pr-4 py-3 bg-gray-900/50 border border-gray-700 rounded-xl focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-400/20 transition-all text-white placeholder-gray-500 disabled:opacity-60"
+                  value={profileData.email}
+                  readOnly
+                  className="w-full pl-12 pr-4 py-3 bg-gray-900/50 border border-gray-700 rounded-xl text-white placeholder-gray-500 opacity-80 cursor-default focus:outline-none"
                 />
               </div>
             </div>
@@ -100,11 +125,9 @@ const Profile = () => {
                 <Phone className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
                 <input
                   type="tel"
-                  name="phone"
-                  value={formData.phone}
-                  onChange={handleChange}
-                  disabled={!isEditing}
-                  className="w-full pl-12 pr-4 py-3 bg-gray-900/50 border border-gray-700 rounded-xl focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-400/20 transition-all text-white placeholder-gray-500 disabled:opacity-60"
+                  value={profileData.phone}
+                  readOnly
+                  className="w-full pl-12 pr-4 py-3 bg-gray-900/50 border border-gray-700 rounded-xl text-white placeholder-gray-500 opacity-80 cursor-default focus:outline-none"
                 />
               </div>
             </div>
@@ -126,11 +149,9 @@ const Profile = () => {
                 <User className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
                 <input
                   type="text"
-                  name="emergencyContactName"
-                  value={formData.emergencyContactName}
-                  onChange={handleChange}
-                  disabled={!isEditing}
-                  className="w-full pl-12 pr-4 py-3 bg-gray-900/50 border border-gray-700 rounded-xl focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-400/20 transition-all text-white placeholder-gray-500 disabled:opacity-60"
+                  value={profileData.emergencyContactName}
+                  readOnly
+                  className="w-full pl-12 pr-4 py-3 bg-gray-900/50 border border-gray-700 rounded-xl text-white placeholder-gray-500 opacity-80 cursor-default focus:outline-none"
                 />
               </div>
             </div>
@@ -141,11 +162,9 @@ const Profile = () => {
                 <Phone className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
                 <input
                   type="tel"
-                  name="emergencyContactPhone"
-                  value={formData.emergencyContactPhone}
-                  onChange={handleChange}
-                  disabled={!isEditing}
-                  className="w-full pl-12 pr-4 py-3 bg-gray-900/50 border border-gray-700 rounded-xl focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-400/20 transition-all text-white placeholder-gray-500 disabled:opacity-60"
+                  value={profileData.emergencyContactPhone}
+                  readOnly
+                  className="w-full pl-12 pr-4 py-3 bg-gray-900/50 border border-gray-700 rounded-xl text-white placeholder-gray-500 opacity-80 cursor-default focus:outline-none"
                 />
               </div>
             </div>
