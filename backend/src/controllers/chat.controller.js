@@ -13,7 +13,8 @@ const generateAIResponse = async (userMessage) => {
     // Simulating a small delay to mimic processing
     await new Promise(resolve => setTimeout(resolve, 800));
 
-    return `[Placeholder] You said: "${userMessage}". (Logic to be implemented)`;
+    return `Bellman–Ford Algorithm: Time & Space Complexity Explained  :  
+    The Bellman–Ford algorithm is used to find the shortest paths from a single source in a weighted graph, even when negative edge weights are present. It can also detect negative weight cycles. [this is just a place holder ]`;
 };
 // =================================================================
 
