@@ -1,51 +1,67 @@
-import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useForm } from 'react-hook-form';
 import { Brain, Mail, Lock, User, Phone, UserPlus, ArrowRight } from 'lucide-react';
 
 const Register = () => {
   const navigate = useNavigate();
-  const { register } = useAuth();
-  const [formData, setFormData] = useState({
-    fullName: '',
-    email: '',
-    password: '',
-    confirmPassword: '',
-    phoneNumber: '',
-    emergencyContactName: '',
-    emergencyContactPhone: ''
-  });
+  const { register: registerUser } = useAuth();
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
+  const {
+    register,
+    handleSubmit,
+    watch,
+    formState: { errors },
+  } = useForm();
 
-    if (formData.password !== formData.confirmPassword) {
-      alert('Passwords do not match');
-      return;
-    }
+  const [loading, setLoading] = useState(false);
+  const [apiError, setApiError] = useState('');
 
-    register({
-      name: formData.fullName,
-      email: formData.email,
-      phone: formData.phoneNumber,
-      emergencyContact: {
-        name: formData.emergencyContactName,
-        phone: formData.emergencyContactPhone
+  const password = watch('password');
+
+  const onSubmit = async (data) => {
+    setLoading(true);
+    setApiError('');
+
+    try {
+      const response = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        throw new Error(result.message || 'Registration failed');
       }
-    });
 
-    navigate('/app/chat');
-  };
+      registerUser({
+        user: result.user,
+        token: result.token,
+      });
 
-  const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
-    });
+      navigate('/app/chat');
+    } catch (error) {
+      setApiError(error.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-slate-900 to-gray-900 text-white flex items-center justify-center p-6 relative overflow-hidden">
+      {loading && (
+        <div className="absolute inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center">
+          <div className="flex flex-col items-center space-y-4">
+            <div className="w-10 h-10 border-4 border-blue-400 border-t-transparent rounded-full animate-spin" />
+            <p className="text-gray-300">Creating your account...</p>
+          </div>
+        </div>
+      )}
+
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute w-96 h-96 bg-gradient-to-br from-blue-500/20 to-purple-500/20 rounded-full blur-3xl animate-pulse" style={{ top: '5%', left: '5%' }} />
         <div className="absolute w-96 h-96 bg-gradient-to-br from-purple-500/20 to-pink-500/20 rounded-full blur-3xl animate-pulse" style={{ bottom: '5%', right: '5%', animationDelay: '1s' }} />
@@ -64,7 +80,13 @@ const Register = () => {
         </div>
 
         <div className="bg-white/10 backdrop-blur-md rounded-3xl p-8 border border-white/20 shadow-2xl">
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+            {apiError && (
+              <div className="bg-red-500/10 border border-red-500/30 text-red-400 p-3 rounded-xl text-sm">
+                {apiError}
+              </div>
+            )}
+
             <div className="grid md:grid-cols-2 gap-6">
               <div>
                 <label className="block text-sm font-medium mb-2 text-gray-300">Full Name</label>
@@ -72,14 +94,14 @@ const Register = () => {
                   <User className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
                   <input
                     type="text"
-                    name="fullName"
-                    value={formData.fullName}
-                    onChange={handleChange}
                     className="w-full pl-12 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-400/20 transition-all text-white placeholder-gray-500"
                     placeholder="sai"
-                    required
+                    {...register('fullName', { required: 'Full name is required' })}
                   />
                 </div>
+                {errors.fullName && (
+                  <p className="text-red-400 text-sm mt-1">{errors.fullName.message}</p>
+                )}
               </div>
 
               <div>
@@ -88,14 +110,14 @@ const Register = () => {
                   <Mail className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
                   <input
                     type="email"
-                    name="email"
-                    value={formData.email}
-                    onChange={handleChange}
                     className="w-full pl-12 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-400/20 transition-all text-white placeholder-gray-500"
                     placeholder="your@email.com"
-                    required
+                    {...register('email', { required: 'Email is required' })}
                   />
                 </div>
+                {errors.email && (
+                  <p className="text-red-400 text-sm mt-1">{errors.email.message}</p>
+                )}
               </div>
             </div>
 
@@ -106,14 +128,17 @@ const Register = () => {
                   <Lock className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
                   <input
                     type="password"
-                    name="password"
-                    value={formData.password}
-                    onChange={handleChange}
                     className="w-full pl-12 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-400/20 transition-all text-white placeholder-gray-500"
                     placeholder="••••••••"
-                    required
+                    {...register('password', {
+                      required: 'Password is required',
+                      minLength: { value: 6, message: 'Password must be at least 6 characters' }
+                    })}
                   />
                 </div>
+                {errors.password && (
+                  <p className="text-red-400 text-sm mt-1">{errors.password.message}</p>
+                )}
               </div>
 
               <div>
@@ -122,14 +147,17 @@ const Register = () => {
                   <Lock className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
                   <input
                     type="password"
-                    name="confirmPassword"
-                    value={formData.confirmPassword}
-                    onChange={handleChange}
                     className="w-full pl-12 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-400/20 transition-all text-white placeholder-gray-500"
                     placeholder="••••••••"
-                    required
+                    {...register('confirmPassword', {
+                      required: 'Please confirm your password',
+                      validate: (value) => value === password || 'Passwords do not match'
+                    })}
                   />
                 </div>
+                {errors.confirmPassword && (
+                  <p className="text-red-400 text-sm mt-1">{errors.confirmPassword.message}</p>
+                )}
               </div>
             </div>
 
@@ -139,14 +167,14 @@ const Register = () => {
                 <Phone className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
                 <input
                   type="tel"
-                  name="phoneNumber"
-                  value={formData.phoneNumber}
-                  onChange={handleChange}
                   className="w-full pl-12 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-400/20 transition-all text-white placeholder-gray-500"
                   placeholder="+91 1234567890"
-                  required
+                  {...register('phoneNumber', { required: 'Phone number is required' })}
                 />
               </div>
+              {errors.phoneNumber && (
+                <p className="text-red-400 text-sm mt-1">{errors.phoneNumber.message}</p>
+              )}
             </div>
 
             <div className="border-t border-white/10 pt-6">
@@ -162,14 +190,14 @@ const Register = () => {
                     <User className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
                     <input
                       type="text"
-                      name="emergencyContactName"
-                      value={formData.emergencyContactName}
-                      onChange={handleChange}
                       className="w-full pl-12 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-400/20 transition-all text-white placeholder-gray-500"
                       placeholder="Emergency contact name"
-                      required
+                      {...register('emergencyContactName', { required: 'Emergency contact name is required' })}
                     />
                   </div>
+                  {errors.emergencyContactName && (
+                    <p className="text-red-400 text-sm mt-1">{errors.emergencyContactName.message}</p>
+                  )}
                 </div>
 
                 <div>
@@ -178,21 +206,22 @@ const Register = () => {
                     <Phone className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
                     <input
                       type="tel"
-                      name="emergencyContactPhone"
-                      value={formData.emergencyContactPhone}
-                      onChange={handleChange}
                       className="w-full pl-12 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-400/20 transition-all text-white placeholder-gray-500"
                       placeholder="+91 1234567890"
-                      required
+                      {...register('emergencyContactPhone', { required: 'Emergency contact phone is required' })}
                     />
                   </div>
+                  {errors.emergencyContactPhone && (
+                    <p className="text-red-400 text-sm mt-1">{errors.emergencyContactPhone.message}</p>
+                  )}
                 </div>
               </div>
             </div>
 
             <button
               type="submit"
-              className="w-full py-3 bg-gradient-to-r from-blue-500 to-purple-500 rounded-xl font-semibold hover:shadow-lg hover:shadow-blue-500/50 transition-all duration-300 transform hover:scale-[1.02] flex items-center justify-center space-x-2 group"
+              disabled={loading}
+              className="w-full py-3 bg-gradient-to-r from-blue-500 to-purple-500 rounded-xl font-semibold hover:shadow-lg hover:shadow-blue-500/50 transition-all duration-300 transform hover:scale-[1.02] flex items-center justify-center space-x-2 group disabled:opacity-60 disabled:cursor-not-allowed disabled:transform-none"
             >
               <span>Create Account</span>
               <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
@@ -218,3 +247,5 @@ const Register = () => {
 };
 
 export default Register;
+import { useState } from 'react';
+
