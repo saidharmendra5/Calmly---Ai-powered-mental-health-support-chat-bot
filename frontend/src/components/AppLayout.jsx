@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
-import { MessageCircle, Wind, Book, User, PlusCircle, Menu, X, LogOut, Brain, Loader } from 'lucide-react';
+import { MessageCircle, Wind, Book, User, PlusCircle, Menu, X, LogOut, Brain, Loader, Gamepad2 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 const AppLayout = () => {
@@ -16,7 +16,8 @@ const AppLayout = () => {
   const currentChatId = location.pathname.split('/app/chat/')[1];
 
   const navItems = [
-    { path: '/app/chat', icon: MessageCircle, label: 'Chat' },
+    // { path: '/app/chat', icon: MessageCircle, label: 'Chat' },
+    { path: '/app/games', icon: Gamepad2, label: 'Games' },
     { path: '/app/breathing', icon: Wind, label: 'Breathing' },
     { path: '/app/books', icon: Book, label: 'Books' },
     { path: '/app/profile', icon: User, label: 'Profile' },
