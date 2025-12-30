@@ -100,6 +100,7 @@ import Chat from './pages/Chat';
 import Breathing from './pages/Breathing';
 import Books from './pages/Books';
 import Profile from './pages/Profile';
+import Games from './pages/Games';
 
 const ProtectedRoute = ({ children }) => {
   const { user, loading } = useAuth();
@@ -134,6 +135,7 @@ function App() {
 
             <Route path="breathing" element={<Breathing />} />
             <Route path="books" element={<Books />} />
+            <Route path='games' element={<Games />} />
             <Route path="profile" element={<Profile />} />
 
             {/* Default redirect to chat */}
