@@ -17,9 +17,10 @@ const AppLayout = () => {
 
   const navItems = [
     // { path: '/app/chat', icon: MessageCircle, label: 'Chat' },
-    { path: '/app/games', icon: Gamepad2, label: 'Games' },
+
     { path: '/app/breathing', icon: Wind, label: 'Breathing' },
     { path: '/app/books', icon: Book, label: 'Books' },
+    { path: '/app/games', icon: Gamepad2, label: 'Games' },
     { path: '/app/profile', icon: User, label: 'Profile' },
   ];
 
