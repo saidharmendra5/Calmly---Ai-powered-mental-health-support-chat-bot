@@ -571,7 +571,7 @@ const Chat = () => {
             </button>
           </form>
           <p className="text-[10px] text-gray-600 mt-2 text-center">
-            Conversations are private and encrypted.
+            Conversations are private.
           </p>
         </div>
       </div>
