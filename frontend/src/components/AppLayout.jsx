@@ -24,12 +24,13 @@ const AppLayout = () => {
     { path: '/app/profile', icon: User, label: 'Profile' },
   ];
 
-  // Fetch chats from Backend
   useEffect(() => {
     const fetchChats = async () => {
       try {
         const token = localStorage.getItem("token");
-        const response = await fetch('http://localhost:5000/api/chats', {
+
+        // 🔥 FIX: Updated to your live Render Backend URL
+        const response = await fetch('https://calmly-ai-powered-mental-health-support.onrender.com/api/chats', {
           headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json'
