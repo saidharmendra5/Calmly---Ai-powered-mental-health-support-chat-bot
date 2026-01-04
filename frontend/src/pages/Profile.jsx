@@ -19,8 +19,11 @@ const Profile = () => {
       try {
         const token = localStorage.getItem("token");
 
+        const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:5000";
+
+        // 2. Use the variable in the fetch URL
         const response = await fetch(
-          "http://localhost:5000/api/users/me",
+          `${API_BASE}/api/users/me`,
           {
             method: "GET",
             headers: {

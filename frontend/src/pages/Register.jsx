@@ -24,7 +24,11 @@ const Register = () => {
     setApiError('');
 
     try {
-      const response = await fetch('http://localhost:5000/api/auth/register', {
+      // 1. Define the Base URL dynamically
+      const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:5000";
+
+      // 2. Use the variable in the fetch URL
+      const response = await fetch(`${API_BASE}/api/auth/register`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
