@@ -1,6 +1,10 @@
 const pool = require("../db");
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 
+// 1. Import and Setup Twilio
+const twilio = require('twilio');
+const client = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
+
 // =================================================================
 // 🤖 GEMINI CONFIGURATION
 // =================================================================
@@ -203,10 +207,50 @@ const distressKeywords = [
     "i want to end this"
 ];
 
-// 2. Placeholder function for the SMS logic (we will connect this to Twilio later)
+// 2. The Emergency Function
 const triggerEmergencySMS = async (userId, userMessage) => {
-    console.log(`[EMERGENCY TRIGGERED] User: ${userId} | Message: "${userMessage}"`);
-    // TODO: Call the /api/send-sos endpoint or execute Twilio logic here
+    try {
+        console.log(`[EMERGENCY LOG] Processing alert for User: ${userId}`);
+
+        // A. Fetch the User's Emergency Contact from Database
+        // We need the contact's phone number and the user's real name
+        const userResult = await pool.query(
+            "SELECT full_name, emergency_contact_name, emergency_contact_phone FROM users WHERE id = $1",
+            [userId]
+        );
+
+        if (userResult.rows.length === 0) {
+            console.error("User not found, cannot send emergency SMS.");
+            return;
+        }
+
+        const user = userResult.rows[0];
+        const contactNumber = user.emergency_contact_phone; // E.g., "+1234567890"
+        const contactName = user.emergency_contact_name;
+        const full_name = user.full_name;
+
+        if (!contactNumber) {
+            console.error("No emergency contact number set for this user.");
+            return;
+        }
+
+        // B. Construct the Message
+        // Note: SMS segments are limited to 160 chars. Keep it concise.
+        const smsBody = `ALERT :${full_name} is showing signs of high distress. They messaged: "${userMessage}". Please check on them immediately.`;
+
+        // C. Send via Twilio
+        const message = await client.messages.create({
+            body: smsBody,
+            from: process.env.TWILIO_PHONE_NUMBER, // Your Twilio number
+            to: contactNumber
+        });
+
+        console.log(`[SMS SENT] SID: ${message.sid} to ${contactName} (${contactNumber})`);
+
+    } catch (error) {
+        console.error("[SMS FAILED] Error sending emergency alert:", error.message);
+        // Optional: Implement a fallback notification here (e.g., email admins)
+    }
 };
 
 exports.sendMessage = async (req, res) => {
