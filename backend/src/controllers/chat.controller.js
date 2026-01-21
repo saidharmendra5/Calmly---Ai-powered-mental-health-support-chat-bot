@@ -1,74 +1,40 @@
 const pool = require("../db");
-const { GoogleGenerativeAI } = require("@google/generative-ai");
+// Note: We removed GoogleGenerativeAI imports since we aren't using them anymore
+const fetch = require('node-fetch');
 
 // 1. Import and Setup Twilio
 const twilio = require('twilio');
 const client = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
 
 // =================================================================
-// 🤖 GEMINI CONFIGURATION
+// 🐍 PYTHON AI CONFIGURATION
 // =================================================================
+// Ensure this matches your active Render URL
+const PYTHON_SERVICE_URL = 'https://calmly-ai-powered-mental-health-support-wc6i.onrender.com/chat';
 
-// Ensure GEMINI_API_KEY is in your .env file
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-
-// The "Hard Guardrails" for your bot
-const SYSTEM_INSTRUCTION = `
-You are Calmly, a specialized mental health support AI.
-
-1. SCOPE RESTRICTION (STRICT):
-   - You act ONLY as a mental health companion.
-   - You can discuss: emotions, anxiety, depression, stress, relationships, mindfulness, and self-care.
-   - If the user asks about ANYTHING else (e.g., coding, math, history, movies, facts, homework), you MUST ignore the question and return EXACTLY this message:
-   "I am designed to provide support for your mental well-being. I cannot assist with other topics, but I am here to listen if you would like to share how you are feeling."
-
-2. SAFETY:
-   - If a user mentions self-harm or suicide, kindly suggest seeking professional help immediately and provide standard helpline context.
-
-3. TONE & STYLE:
-   - Warm, empathetic, and gentle.
-   - Concise (2-3 sentences maximum).
-   - No bullet points. Speak naturally.
-`;
-
-const generateGeminiResponse = async (chatId, currentMessage) => {
+// --- HELPER: Call Python Service ---
+const analyzeWithPython = async (message) => {
     try {
-        // 1. Initialize Model (Using Free Lite Model)
-        const model = genAI.getGenerativeModel({
-            model: "gemini-2.5-flash-lite",
-            systemInstruction: SYSTEM_INSTRUCTION
+        console.log(`[AI-BRIDGE] Sending to Python: "${message}"`);
+        const response = await fetch(PYTHON_SERVICE_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ message: message })
         });
 
-        // 2. Start Chat WITHOUT History (Stateless Mode)
-        // We pass an empty array [] so it knows nothing about previous texts.
-        const chat = model.startChat({
-            history: [],
-        });
+        if (!response.ok) throw new Error(`Python Error: ${response.statusText}`);
 
-        // 3. Generate Response
-        const result = await chat.sendMessage(currentMessage);
-        const response = await result.response;
-        return response.text();
+        const data = await response.json();
+        console.log(`[AI-BRIDGE] Python Analysis: Emotion=${data.debug_info?.detected_emotion}`);
+        return data; // Returns { reply, debug_info }
 
     } catch (error) {
-        console.error("Error:", error.message);
-
-        // Backup Logic (Experimental Model)
-        if (error.message.includes("404") || error.message.includes("429")) {
-            try {
-                const backupModel = genAI.getGenerativeModel({
-                    model: "gemini-2.0-flash-exp",
-                    systemInstruction: SYSTEM_INSTRUCTION
-                });
-                const backupChat = backupModel.startChat({ history: [] });
-                const backupResult = await backupChat.sendMessage(currentMessage);
-                return backupResult.response.text();
-            } catch (e) {
-                console.error("Backup failed");
-            }
-        }
-
-        return "I'm having a little trouble connecting right now. Could you say that again?";
+        console.error("[AI-BRIDGE] Failed:", error.message);
+        // Fallback if Python is completely down
+        return {
+            reply: "I am having trouble connecting to my thoughts right now. Please try again in a moment.",
+            debug_info: { detected_emotion: 'neutral', detected_context: 'error' }
+        };
     }
 };
 
@@ -76,7 +42,7 @@ const generateGeminiResponse = async (chatId, currentMessage) => {
 // 🎮 CONTROLLER ACTIONS
 // =================================================================
 
-// 1. Get All Chats (Sidebar)
+// 1. Get All Chats
 exports.getAllChats = async (req, res) => {
     try {
         const userId = req.user.id;
@@ -97,7 +63,6 @@ exports.getChatHistory = async (req, res) => {
         const { chatId } = req.params;
         const userId = req.user.id;
 
-        // Verify chat belongs to user
         const chatCheck = await pool.query(
             "SELECT id FROM chats WHERE id = $1 AND user_id = $2",
             [chatId, userId]
@@ -107,7 +72,6 @@ exports.getChatHistory = async (req, res) => {
             return res.status(404).json({ message: "Chat not found" });
         }
 
-        // Fetch messages
         const messages = await pool.query(
             "SELECT id, role, content, created_at FROM messages WHERE chat_id = $1 ORDER BY created_at ASC",
             [chatId]
@@ -120,7 +84,7 @@ exports.getChatHistory = async (req, res) => {
     }
 };
 
-// 3. Start New Chat
+// 3. Start New Chat (UPDATED)
 exports.createChat = async (req, res) => {
     const client = await pool.connect();
     try {
@@ -130,19 +94,24 @@ exports.createChat = async (req, res) => {
 
         await client.query('BEGIN');
 
+        // A. Create Chat
         const chatResult = await client.query(
             "INSERT INTO chats (user_id, title) VALUES ($1, $2) RETURNING id",
             [userId, title]
         );
         const chatId = chatResult.rows[0].id;
 
+        // B. Save User Message
         await client.query(
             "INSERT INTO messages (chat_id, role, content) VALUES ($1, $2, $3)",
             [chatId, 'user', message]
         );
 
-        const aiResponse = await generateGeminiResponse(chatId, message);
+        // C. Get Response DIRECTLY from Python
+        const pythonData = await analyzeWithPython(message);
+        const aiResponse = pythonData.reply;
 
+        // D. Save Assistant Response
         await client.query(
             "INSERT INTO messages (chat_id, role, content) VALUES ($1, $2, $3)",
             [chatId, 'assistant', aiResponse]
@@ -160,116 +129,74 @@ exports.createChat = async (req, res) => {
     }
 };
 
-// 1. Define keywords to watch for
+// --- Emergency Logic ---
 const distressKeywords = [
-    "suicide",
-    "kill myself",
-    "end it all",
-    "want to die",
-    "end my life",
-    "hurt myself",
-    "i want to end this"
+    "suicide", "kill myself", "end it all", "want to die",
+    "end my life", "hurt myself", "i want to end this"
 ];
 
-// 2. The Emergency Function (UPDATED: Now accepts lat/long)
 const triggerEmergencySMS = async (userId, userMessage, latitude, longitude) => {
     try {
         console.log(`[EMERGENCY LOG] Processing alert for User: ${userId}`);
-
-        // A. Fetch the User's Emergency Contact from Database
         const userResult = await pool.query(
             "SELECT full_name, emergency_contact_name, emergency_contact_phone FROM users WHERE id = $1",
             [userId]
         );
 
-        if (userResult.rows.length === 0) {
-            console.error("User not found, cannot send emergency SMS.");
-            return;
-        }
-
+        if (userResult.rows.length === 0) return;
         const user = userResult.rows[0];
-        const contactNumber = user.emergency_contact_phone;
-        const contactName = user.emergency_contact_name;
-        const full_name = user.full_name;
+        if (!user.emergency_contact_phone) return;
 
-        if (!contactNumber) {
-            console.error("No emergency contact number set for this user.");
-            return;
-        }
-
-        // B. Construct Location Link
         let locationString = "Location unavailable";
         if (latitude && longitude) {
             locationString = `https://www.google.com/maps?q=${latitude},${longitude}`;
         }
 
-        // C. Construct the Message
-        // SMS segments are limited. We keep it concise.
-        const smsBody = `ALERT: ${full_name} is in high distress. Location: ${locationString}. Please check on them.`;
+        const smsBody = `ALERT: ${user.full_name} is in high distress. Location: ${locationString}. Please check on them.`;
 
-        // D. Send via Twilio
-        const message = await client.messages.create({
+        await client.messages.create({
             body: smsBody,
             from: process.env.TWILIO_PHONE_NUMBER,
-            to: contactNumber
+            to: user.emergency_contact_phone
         });
-
-        console.log(`[SMS SENT] SID: ${message.sid} to ${contactName} (${contactNumber})`);
-
+        console.log(`[SMS SENT] to ${user.emergency_contact_name}`);
     } catch (error) {
-        console.error("[SMS FAILED] Error sending emergency alert:", error.message);
+        console.error("[SMS FAILED]:", error.message);
     }
 };
 
+// 4. Send Message (UPDATED)
 exports.sendMessage = async (req, res) => {
     try {
         const { chatId } = req.params;
-        // UPDATED: Extract latitude and longitude from the request body
         const { message, latitude, longitude } = req.body;
         const userId = req.user.id;
 
-        // --- Step 1: Authorization Check ---
-        const chatCheck = await pool.query(
-            "SELECT id FROM chats WHERE id = $1 AND user_id = $2",
-            [chatId, userId]
-        );
+        // --- Auth Check ---
+        const chatCheck = await pool.query("SELECT id FROM chats WHERE id = $1 AND user_id = $2", [chatId, userId]);
         if (chatCheck.rows.length === 0) return res.status(403).json({ error: "Unauthorized" });
 
-        // --- Step 2: Save User Message ---
-        await pool.query(
-            "INSERT INTO messages (chat_id, role, content) VALUES ($1, $2, $3)",
-            [chatId, 'user', message]
-        );
+        // --- Save User Message ---
+        await pool.query("INSERT INTO messages (chat_id, role, content) VALUES ($1, $2, $3)", [chatId, 'user', message]);
 
-        // --- Step 3: Distress Analysis ---
+        // --- Distress Check ---
         const lowerCaseMessage = message.toLowerCase();
         const isDistressed = distressKeywords.some(keyword => lowerCaseMessage.includes(keyword));
 
         let finalResponse = "";
 
         if (isDistressed) {
-            // --- EMERGENCY FLOW ---
-
-            // A. Trigger the SMS logic with location data
+            // EMERGENCY FLOW
             await triggerEmergencySMS(userId, message, latitude, longitude);
-
-            // B. Set the Safety Message (Do NOT call Gemini)
-            finalResponse = "I am detecting that you are in significant distress. Please do not take any actions in stress. You are not alone. Please contact a loved one or an emergency helpline immediately.";
-
+            finalResponse = "I am detecting significant distress. Please contact a helpline immediately. You are not alone.";
         } else {
-            // --- NORMAL FLOW ---
-
-            // A. Call Gemini API
-            finalResponse = await generateGeminiResponse(chatId, message);
+            // NORMAL FLOW: Direct Python Bridge
+            const pythonData = await analyzeWithPython(message);
+            finalResponse = pythonData.reply;
         }
 
-        // --- Step 4: Save the Assistant Response ---
-        await pool.query(
-            "INSERT INTO messages (chat_id, role, content) VALUES ($1, $2, $3)",
-            [chatId, 'assistant', finalResponse]
-        );
-
-        // --- Step 5: Update Timestamp ---
+        // --- Save Assistant Response ---
+        await pool.query("INSERT INTO messages (chat_id, role, content) VALUES ($1, $2, $3)", [chatId, 'assistant', finalResponse]);
         await pool.query("UPDATE chats SET updated_at = NOW() WHERE id = $1", [chatId]);
 
         res.json({ reply: finalResponse });
