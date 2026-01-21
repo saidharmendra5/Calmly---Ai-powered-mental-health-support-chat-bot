@@ -1,0 +1,305 @@
+{
+    "chitchat": [
+        {
+            "id": "greeting",
+            "patterns": [
+                "hi",
+                "hello",
+                "hey",
+                "hola",
+                "good morning",
+                "good evening",
+                "greetings",
+                "hi there"
+            ],
+            "responses": [
+                "Hello! How are you feeling today?",
+                "Hi there. I'm here and ready to listen.",
+                "Hey. How can I support you right now?"
+            ]
+        },
+        {
+            "id": "how_are_you",
+            "patterns": [
+                "how are you",
+                "how is it going",
+                "how are things",
+                "what's up"
+            ],
+            "responses": [
+                "I'm just a bot, so I don't have feelings, but I'm here to support you! How are *you* doing?",
+                "I'm fully operational and ready to listen. How are you holding up?"
+            ]
+        },
+        {
+            "id": "bot_identity",
+            "patterns": [
+                "who are you",
+                "what is your name",
+                "are you a robot",
+                "are you real",
+                "what are you"
+            ],
+            "responses": [
+                "I am a supportive AI companion here to help you navigate your emotions.",
+                "I'm a mental health support bot. I'm not a therapist, but I'm here to listen without judgment."
+            ]
+        },
+        {
+            "id": "bot_purpose",
+            "patterns": [
+                "what do you do",
+                "how can you help",
+                "what is this"
+            ],
+            "responses": [
+                "I help by listening to your feelings, offering coping strategies, and providing a safe space to vent.",
+                "I'm here to chat about whatever is on your mind, specifically regarding stress, anxiety, or relationships."
+            ]
+        },
+        {
+            "id": "user_identity",
+            "patterns": [
+                "my name is",
+                "i am called",
+                "call me"
+            ],
+            "responses": [
+                "It is nice to meet you. I'm glad you're here.",
+                "Thank you for sharing that with me. This is a safe space for you."
+            ]
+        },
+        {
+            "id": "thanks",
+            "patterns": [
+                "thank you",
+                "thanks",
+                "thx",
+                "appreciate it"
+            ],
+            "responses": [
+                "You're very welcome.",
+                "No problem at all. Take care of yourself."
+            ]
+        },
+        {
+            "id": "bye",
+            "patterns": [
+                "bye",
+                "goodbye",
+                "see ya",
+                "talk later"
+            ],
+            "responses": [
+                "Goodbye. Remember to be kind to yourself.",
+                "Take care. I'll be here if you need to talk again."
+            ]
+        }
+    ],
+    "intents": [
+        {
+            "id": "exams",
+            "keywords": [
+                "exam",
+                "test",
+                "quiz",
+                "math",
+                "grade",
+                "fail",
+                "study",
+                "academic",
+                "gpa",
+                "finals",
+                "assignment",
+                "homework"
+            ],
+            "responses": {
+                "fear": [
+                    "I can hear how much pressure you are putting on yourself. While exams are important, please remember that a single grade does not define your intelligence or your future worth. Have you been able to take any small breaks today?",
+                    "Exam anxiety can feel paralyzing, and it makes total sense that you're scared of the outcome after working so hard. Let's try to ground ourselves in the present moment—right now, you are safe, and you are doing your best.",
+                    "The fear of failure is a heavy burden to carry. It sounds like you're predicting the worst-case scenario, which is a common response to stress. What is one small, manageable thing you could focus on right now instead of the big picture?"
+                ],
+                "sadness": [
+                    "It is heartbreaking to put in effort and feel like it wasn't enough. Be gentle with yourself today; academic disappointment is a valid form of grief.",
+                    "I'm so sorry you're going through this slump. It's okay to feel disappointed about your grades. Try not to let this one moment shadow all your other achievements."
+                ],
+                "anger": [
+                    "It is completely valid to feel angry when the academic system feels rigid or unfair. It sounds like you're feeling unheard or undervalued, and that is incredibly frustrating.",
+                    "That sounds exhausting and unfair. You have a right to be mad when your hard work isn't reflected in the results. Do you want to vent more about what specifically happened?"
+                ]
+            }
+        },
+        {
+            "id": "relationships",
+            "keywords": [
+                "breakup",
+                "ex",
+                "girlfriend",
+                "boyfriend",
+                "dating",
+                "love",
+                "heartbroken",
+                "divorce",
+                "cheated",
+                "partner",
+                "dumped"
+            ],
+            "responses": {
+                "sadness": [
+                    "Heartbreak is physically and emotionally exhausting. It feels like a part of you is missing, and I want you to know that it is okay to not be okay for a while. Take all the time you need to heal.",
+                    "I am listening, and I hear how much pain you are in. Losing that connection is devastating. Please treat yourself with the same kindness you would offer a best friend going through this.",
+                    "The silence after a breakup can feel so loud. You are not alone in this feeling, even though it feels incredibly isolating right now. I'm here to listen to whatever is on your mind."
+                ],
+                "anger": [
+                    "It sounds like you were treated poorly, and your anger is a healthy response to that injustice. You tried your best, and it hurts when that isn't reciprocated.",
+                    "Betrayal leaves a deep wound, and feeling furious is a necessary part of protecting yourself. Let yourself feel that anger without judgment—it means you know you deserved better."
+                ],
+                "fear": [
+                    "It makes sense that you're scared of being alone or never finding this again. That is a very common fear after a relationship ends, but it doesn't mean it's true.",
+                    "Change is terrifying, especially when it involves losing your main support system. We can take this one minute at a time."
+                ]
+            }
+        },
+        {
+            "id": "loneliness",
+            "keywords": [
+                "lonely",
+                "alone",
+                "isolated",
+                "nobody",
+                "friends",
+                "ignored",
+                "left out",
+                "invisible",
+                "social",
+                "party"
+            ],
+            "responses": {
+                "sadness": [
+                    "Loneliness is such a heavy, aching feeling. It sounds like you're feeling really disconnected from the world right now, and I want you to know that I'm here with you.",
+                    "Feeling invisible is incredibly painful. You matter, and your thoughts matter, even if it doesn't feel like anyone is acknowledging them right now. I'm listening.",
+                    "It's tough when it seems like everyone else is connected while you're on the outside looking in. That feeling doesn't reflect your worthiness of love and friendship."
+                ],
+                "neutral": [
+                    "Solitude can sometimes turn into loneliness without us noticing. How long have you been feeling this sense of isolation?",
+                    "It sounds like you're craving deeper connection. Is there anyone in your life you've been thinking about reaching out to, even just for a small text?"
+                ]
+            }
+        },
+        {
+            "id": "family_conflict",
+            "keywords": [
+                "mom",
+                "dad",
+                "parents",
+                "fight",
+                "yelling",
+                "home",
+                "mother",
+                "father",
+                "sister",
+                "brother",
+                "sibling",
+                "household"
+            ],
+            "responses": {
+                "anger": [
+                    "Living in a high-conflict environment is draining. You deserve a space where you feel safe and heard, and it's frustrating when your own home doesn't provide that.",
+                    "It sounds like you're reaching your breaking point with them. It is incredibly hard to stay calm when your boundaries are being crossed repeatedly."
+                ],
+                "sadness": [
+                    "It hurts so much when the people who are supposed to support us become the source of our pain. I'm sorry things are so volatile at home right now.",
+                    "Family dynamics can be so complicated and painful. It sounds like you're grieving the relationship you wish you had with them."
+                ],
+                "fear": [
+                    "Arguments at home can make you feel unsafe and on edge. If you feel like you are in physical danger, please prioritize getting to a safe place immediately.",
+                    "Walking on eggshells in your own house is exhausting. It makes sense that you're anxious about what might happen next."
+                ]
+            }
+        },
+        {
+            "id": "work_stress",
+            "keywords": [
+                "job",
+                "boss",
+                "work",
+                "career",
+                "fired",
+                "layoff",
+                "salary",
+                "colleague",
+                "deadline",
+                "office",
+                "interview",
+                "burnout"
+            ],
+            "responses": {
+                "fear": [
+                    "Career uncertainty triggers our deepest survival instincts, so it makes total sense that you're anxious. Remember that your job is what you do, not who you are.",
+                    "The fear of losing your job or failing at work is overwhelming. Let's try to separate the facts from the fear—what is the actual evidence that things are going wrong?"
+                ],
+                "anger": [
+                    "It sounds like you're being undervalued or overworked, and that is a recipe for burnout. You have a right to be frustrated when your efforts aren't recognized.",
+                    "Workplace politics can be so toxic. It sounds like you're dealing with a really unfair situation, and anyone in your shoes would be angry."
+                ],
+                "sadness": [
+                    "Burnout often looks like sadness. It sounds like this job is draining your spirit, and I'm sorry you're going through this exhaustion.",
+                    "It's hard to feel motivated when you're feeling unappreciated. Be gentle with yourself—you're human, not a machine."
+                ]
+            }
+        },
+        {
+            "id": "self_esteem",
+            "keywords": [
+                "ugly",
+                "fat",
+                "stupid",
+                "worthless",
+                "hate myself",
+                "useless",
+                "failure",
+                "gross",
+                "insecure",
+                "confidence"
+            ],
+            "responses": {
+                "sadness": [
+                    "I hear you saying really harsh things about yourself. I wish you could see yourself through the eyes of someone who loves you—you are far more than these negative thoughts.",
+                    "It hurts my 'heart' to hear you speak about yourself that way. You are worthy of kindness, especially from yourself. Would you say these things to a friend?",
+                    "These feelings of worthlessness are powerful, but they are not facts. They are just thoughts passing through a mind that is currently in pain."
+                ],
+                "anger": [
+                    "It sounds like you're frustrated with yourself, but maybe you're being too hard on yourself? You're doing the best you can with the tools you have.",
+                    "Self-hatred is often anger turned inward. What are you actually angry about? Is it possible you're blaming yourself for things out of your control?"
+                ]
+            }
+        }
+    ],
+    "fallbacks": {
+        "joy": [
+            "I can feel the energy in your words! I'm so glad to hear things are looking up for you. Hold onto this moment.",
+            "That is wonderful news! It’s so important to celebrate these wins, big or small. How are you planning to enjoy this feeling?",
+            "I love hearing this positivity! It sounds like a weight has been lifted off your shoulders."
+        ],
+        "sadness": [
+            "I hear a lot of pain in your words, and I want you to know that your feelings are valid. You don't have to carry this alone right now.",
+            "It sounds like you're going through a really dark time. I'm here to sit in the dark with you until things feel a little lighter.",
+            "Thank you for trusting me with this. Sorrow can feel isolating, but I am right here listening to you."
+        ],
+        "anger": [
+            "I can tell you're incredibly frustrated. It’s okay to let it out—bottling it up only makes it heavier.",
+            "That sounds really aggravating. You have a right to your feelings. Do you want to vent more about the specifics?",
+            "I hear you loud and clear. It’s frustrating when things feel out of your control or unfair."
+        ],
+        "fear": [
+            "It sounds like your mind is racing with 'what-ifs.' That is a scary place to be. Let's take a deep breath together.",
+            "Anxiety can make everything look dangerous. I'm here to remind you that you are safe in this conversation.",
+            "I hear the fear in your message. You are facing a lot of uncertainty, and it's brave of you to even talk about it."
+        ],
+        "neutral": [
+            "I'm listening. Please feel free to tell me more about what's on your mind.",
+            "I'm here for you. How has your day been going otherwise?",
+            "Sometimes it helps just to chat. I'm ready to listen whenever you're ready to share."
+        ]
+    }
+}
