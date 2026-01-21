@@ -1,13 +1,32 @@
 import json
 import random
 import nltk
+import json
+import random
+import nltk
 import traceback
-import re  # <--- Added Regex library
+import re
+import requests
+import os
 from flask import Flask, request, jsonify
-from transformers import pipeline
 from nltk.stem import PorterStemmer
 
 app = Flask(__name__)
+
+# --- CONFIGURATION (UPDATED) ---
+# New API URL structure
+API_URL = "https://router.huggingface.co/hf-inference/models/j-hartmann/emotion-english-distilroberta-base"
+
+# Get token
+HF_TOKEN = os.environ.get("HF_TOKEN") 
+# Fallback for local testing if env var isn't set (Replace with your actual token for local test)
+if not HF_TOKEN:
+    # prompt user or use a hardcoded string ONLY for local testing
+    print("⚠️ WARNING: HF_TOKEN not found in environment variables.")
+
+headers = {"Authorization": f"Bearer {HF_TOKEN}"}
+
+# ... (Rest of the code remains exactly the same) ...
 
 # --- NLTK SETUP ---
 try:
@@ -19,18 +38,6 @@ except LookupError:
 
 stemmer = PorterStemmer()
 
-print("⏳ Loading AI Model...")
-try:
-    # Load the emotion model
-    emotion_classifier = pipeline(
-        "text-classification", 
-        model="j-hartmann/emotion-english-distilroberta-base", 
-        top_k=1
-    )
-    print("✅ AI Brain Ready!")
-except Exception as e:
-    print(f"❌ MODEL CRASH: {e}")
-
 # Load Data
 try:
     with open('bot_data.json', 'r') as f:
@@ -41,107 +48,90 @@ except Exception as e:
     BOT_DATA = None
 
 # ---------------------------------------------------------
-# NEW FUNCTION: Check Chitchat (Layer 0)
+# HELPER: Query Hugging Face API
 # ---------------------------------------------------------
-def check_chitchat(text):
-    """
-    Checks if the user message matches any common patterns (hi, how are you, etc).
-    Returns a response string if matched, otherwise None.
-    """
-    cleaned_text = text.lower().strip()
-    
-    if not BOT_DATA or 'chitchat' not in BOT_DATA:
+def query_emotion_api(payload):
+    try:
+        response = requests.post(API_URL, headers=headers, json=payload)
+        return response.json()
+    except Exception as e:
+        print(f"API Error: {e}")
         return None
-
-    for category in BOT_DATA['chitchat']:
-        for pattern in category['patterns']:
-            # We use Regex to look for the pattern inside the text
-            # \b ensures "hi" matches "hi!" but NOT "hiding"
-            # re.IGNORECASE handles upper/lowercase
-            if re.search(r'\b' + re.escape(pattern) + r'\b', cleaned_text):
-                return random.choice(category['responses'])
-            
-            # Special check for phrases like "my name is..." where the pattern is at the start
-            if pattern in cleaned_text and "name" in pattern:
-                 return random.choice(category['responses'])
-
-    return None
 
 # ---------------------------------------------------------
 # CORE LOGIC
 # ---------------------------------------------------------
-def get_smart_reply(text):
-    if not BOT_DATA:
-        return {"reply": "Error: bot_data.json is missing."}
+def check_chitchat(text):
+    cleaned_text = text.lower().strip()
+    if not BOT_DATA or 'chitchat' not in BOT_DATA: return None
 
-    # --- LAYER 0: Small Talk Check ---
-    # We check this FIRST. If it matches, we skip the AI model entirely.
+    for category in BOT_DATA['chitchat']:
+        for pattern in category['patterns']:
+            if re.search(r'\b' + re.escape(pattern) + r'\b', cleaned_text):
+                return random.choice(category['responses'])
+            if pattern in cleaned_text and "name" in pattern:
+                 return random.choice(category['responses'])
+    return None
+
+def get_smart_reply(text):
+    if not BOT_DATA: return {"reply": "Error: bot_data.json is missing."}
+
+    # 1. Check Chitchat
     chitchat_response = check_chitchat(text)
     if chitchat_response:
-        return {
-            "reply": chitchat_response,
-            "debug_info": {
-                "detected_emotion": "neutral",
-                "detected_context": "chitchat"
-            }
-        }
+        return {"reply": chitchat_response, "debug_info": {"context": "chitchat"}}
 
-    # --- LAYER 1: AI Emotion & Context ---
+    # 2. Call AI API for Emotion
+    emotion = "neutral" # Default
     try:
-        # 1. Detect Emotion
-        result = emotion_classifier(text)
-        emotion = result[0][0]['label']
-        
-        # 2. Detect Context
-        user_words = [stemmer.stem(w.lower()) for w in nltk.word_tokenize(text)]
-        detected_intent = None
-        
-        for intent in BOT_DATA['intents']:
-            intent_keywords = [stemmer.stem(k) for k in intent['keywords']]
-            if any(word in user_words for word in intent_keywords):
-                detected_intent = intent
-                break
-        
-        # 3. Select Response
-        reply = ""
-        if detected_intent:
-            if emotion in detected_intent['responses']:
-                reply = random.choice(detected_intent['responses'][emotion])
-            else:
-                reply = f"I hear you talking about {detected_intent['id']}, but I'm not sure how to respond to that specific emotion yet. Tell me more."
-        else:
-            # Fallback if no context found
-            fallbacks = BOT_DATA['fallbacks'].get(emotion, BOT_DATA['fallbacks']['neutral'])
-            reply = random.choice(fallbacks)
-            
-        return {
-            "reply": reply,
-            "debug_info": {
-                "detected_emotion": emotion,
-                "detected_context": detected_intent['id'] if detected_intent else "none"
-            }
-        }
+        api_response = query_emotion_api({"inputs": text})
+        # API returns: [[{'label': 'fear', 'score': 0.9}, ...]]
+        if isinstance(api_response, list) and len(api_response) > 0:
+             # Get the top label
+             top_emotion = api_response[0][0]['label']
+             emotion = top_emotion
+        elif isinstance(api_response, dict) and "error" in api_response:
+             print(f"HF API Error: {api_response['error']}")
+             # If model is loading, it sends an error. We fallback to neutral.
     except Exception as e:
-        traceback.print_exc()
-        return {"reply": "I'm having trouble thinking right now.", "error_details": str(e)}
+        print(f"Emotion Check Failed: {e}")
 
-# ---------------------------------------------------------
-# API ROUTE
-# ---------------------------------------------------------
+    # 3. Detect Context & Reply
+    user_words = [stemmer.stem(w.lower()) for w in nltk.word_tokenize(text)]
+    detected_intent = None
+    
+    for intent in BOT_DATA['intents']:
+        intent_keywords = [stemmer.stem(k) for k in intent['keywords']]
+        if any(word in user_words for word in intent_keywords):
+            detected_intent = intent
+            break
+    
+    reply = ""
+    if detected_intent:
+        if emotion in detected_intent['responses']:
+            reply = random.choice(detected_intent['responses'][emotion])
+        else:
+            reply = f"I hear you talking about {detected_intent['id']}."
+    else:
+        fallbacks = BOT_DATA['fallbacks'].get(emotion, BOT_DATA['fallbacks']['neutral'])
+        reply = random.choice(fallbacks)
+        
+    return {
+        "reply": reply,
+        "debug_info": {
+            "detected_emotion": emotion,
+            "detected_context": detected_intent['id'] if detected_intent else "none"
+        }
+    }
+
 @app.route('/chat', methods=['POST'])
 def chat():
     try:
         data = request.json
-        user_message = data.get('message', '')
-        
-        if not user_message:
-            return jsonify({"error": "No message provided"}), 400
-
-        response_data = get_smart_reply(user_message)
+        response_data = get_smart_reply(data.get('message', ''))
         return jsonify(response_data)
-
     except Exception as e:
-        return jsonify({"error": "Server Error", "details": str(e)}), 500
+        return jsonify({"error": str(e)}), 500
 
 if __name__ == '__main__':
-    app.run(port=5000, debug=True)
+    app.run(port=5000)
