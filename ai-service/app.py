@@ -111,7 +111,7 @@ def get_smart_reply(text):
         if emotion in detected_intent['responses']:
             reply = random.choice(detected_intent['responses'][emotion])
         else:
-            reply = f"I hear you talking about {detected_intent['id']}."
+            reply = f"I hear you talking about {detected_intent['id']}. Tell me more. "
     else:
         fallbacks = BOT_DATA['fallbacks'].get(emotion, BOT_DATA['fallbacks']['neutral'])
         reply = random.choice(fallbacks)
