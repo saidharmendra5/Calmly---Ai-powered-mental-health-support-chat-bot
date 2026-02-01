@@ -10,7 +10,7 @@ import Breathing from './pages/Breathing';
 import Books from './pages/Books';
 import Profile from './pages/Profile';
 import GameLibrary from './pages/GameLibrary'; // <--- Ensure you import the menu page
-import Sudoku from './components/games/Sudoku';
+
 import FlappyBird from './components/games/FlappyBird';
 // Game Components
 
@@ -60,7 +60,7 @@ function App() {
             {/* NEW ROUTES */}
 
 
-            <Route path="game/sudoku" element={<Sudoku />} />
+
             <Route path="game/flappy-bird" element={<FlappyBird />} />
             {/* Other Features */}
             <Route path="breathing" element={<Breathing />} />
