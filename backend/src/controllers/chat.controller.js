@@ -188,7 +188,7 @@ exports.sendMessage = async (req, res) => {
         if (isDistressed) {
             // EMERGENCY FLOW
             await triggerEmergencySMS(userId, message, latitude, longitude);
-            finalResponse = "I am detecting significant distress. Please contact a helpline immediately. You are not alone.";
+            finalResponse = "I am really sorry that you're going through something this painful right now. You don't have to handle this alone. If you're having thoughts about hurting yourself, it could help to reach out to someone who can support you in this moment — a trusted friend, family member, or a mental health professional.";
         } else {
             // NORMAL FLOW: Direct Python Bridge
             const pythonData = await analyzeWithPython(message);
