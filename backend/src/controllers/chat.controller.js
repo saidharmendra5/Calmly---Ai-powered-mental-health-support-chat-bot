@@ -1,5 +1,5 @@
 const pool = require("../db");
-// Note: We removed GoogleGenerativeAI imports since we aren't using them anymore
+
 const fetch = require('node-fetch');
 
 // 1. Import and Setup Twilio
@@ -9,7 +9,7 @@ const client = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TO
 // =================================================================
 // 🐍 PYTHON AI CONFIGURATION
 // =================================================================
-// Ensure this matches your active Render URL
+
 const PYTHON_SERVICE_URL = 'https://calmly-ai-powered-mental-health-support-wc6i.onrender.com/chat';
 
 // --- HELPER: Call Python Service ---
@@ -131,7 +131,7 @@ exports.createChat = async (req, res) => {
 
 // --- Emergency Logic ---
 const distressKeywords = [
-    "suicide", "kill myself", "end it all", "want to die",
+    "suicide", "murder", "kill myself", "end it all", "i want to die", "die", "dont want to live", "kill", " want to die",
     "end my life", "hurt myself", "i want to end this"
 ];
 
