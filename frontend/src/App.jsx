@@ -9,7 +9,7 @@ import Chat from './pages/Chat';
 import Breathing from './pages/Breathing';
 import Books from './pages/Books';
 import Profile from './pages/Profile';
-import GameLibrary from './pages/GameLibrary'; // <--- Ensure you import the menu page
+import GameLibrary from './pages/GameLibrary';
 
 import FlappyBird from './components/games/FlappyBird';
 // Game Components

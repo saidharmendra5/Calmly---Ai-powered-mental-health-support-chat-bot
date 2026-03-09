@@ -3,25 +3,11 @@ import React, { useEffect, useRef, useState, useMemo } from 'react';
 import { motion, useScroll, useTransform, useSpring, AnimatePresence, useInView } from 'framer-motion';
 import { Shield, Lock, Sparkles, Heart, ArrowRight, Activity, Zap, CheckCircle2 } from 'lucide-react';
 
-/**
- * UTILITIES
- * Basic math helpers for the generative animation
- */
+
 const lerp = (start, end, t) => start * (1 - t) + end * t;
 const clamp = (num, min, max) => Math.min(Math.max(num, min), max);
 
-/**
- * COMPONENT: CHAOS TO CALM CANVAS
- * The core visual metaphor: Particles transition from erratic noise to harmonic flow.
- */
-/**
- * COMPONENT: PERMANENTLY CALM CANVAS
- * The exact visuals of the original, but locked to the "Calm" state.
- */
-/**
- * COMPONENT: CLEAN CANVAS (No Trails)
- * Same particles, but the background is wiped clean every frame.
- */
+
 const HeroCanvas = () => {
   const canvasRef = useRef(null);
   const containerRef = useRef(null);
@@ -55,14 +41,10 @@ const HeroCanvas = () => {
     handleResize();
 
     const render = () => {
-      // 1. CLEAR CANVAS COMPLETELY
-      // This is the fix. 'clearRect' removes everything from the previous frame.
-      // No ghosting, no trails.
+
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      // (Optional) If you want a solid background color behind the dots:
-      // ctx.fillStyle = 'rgb(15, 23, 42)'; // Solid slate-950
-      // ctx.fillRect(0, 0, canvas.width, canvas.height);
+
 
       particles.forEach(p => {
         // 2. PHYSICS (Calm harmonic motion)

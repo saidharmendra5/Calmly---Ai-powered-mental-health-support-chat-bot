@@ -83,7 +83,7 @@ const Chat = () => {
       try {
         const token = localStorage.getItem("token");
 
-        // 🔥 FIX 1: Hardcoded Production URL to stop Localhost errors
+
         const API_BASE = "https://calmly-ai-powered-mental-health-support.onrender.com";
 
         const response = await fetch(`${API_BASE}/api/chats/${chatId}`, {
@@ -125,7 +125,7 @@ const Chat = () => {
     try {
       const token = localStorage.getItem("token");
 
-      // 🔥 FIX 2: Hardcoded Production URL here as well
+
       const API_BASE = "https://calmly-ai-powered-mental-health-support.onrender.com";
 
       const endpoint = chatId

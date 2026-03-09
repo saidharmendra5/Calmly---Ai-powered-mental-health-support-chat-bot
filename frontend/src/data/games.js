@@ -6,7 +6,7 @@ export const games = [
         thumbnail: "/assets/mindful-match-thumbnail.png",
         category: "Focus"
     },
-    // NEW GAMES
+    // NEW GAME
     {
         id: "flappy-bird",
         title: "Floaty Bird",
