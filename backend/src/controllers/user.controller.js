@@ -7,6 +7,7 @@ exports.getMe = async (req, res) => {
         `SELECT id, full_name, email, phone,
             emergency_contact_name,
             emergency_contact_phone,
+            health_score,
             created_at
      FROM users
      WHERE id = $1`,
