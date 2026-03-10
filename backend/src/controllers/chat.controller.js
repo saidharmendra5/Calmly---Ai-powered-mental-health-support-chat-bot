@@ -135,6 +135,17 @@ const distressKeywords = [
     "end my life", "hurt myself", "i want to end this"
 ];
 
+// weights for user health score logic
+const emotionScoreMap = {
+    "joy": 10,
+    "surprise": 5,
+    "neutral": 0,
+    "sadness": -10,
+    "anger": -10,
+    "fear": -15,
+    "disgust": -5
+};
+
 const triggerEmergencySMS = async (userId, userMessage, latitude, longitude) => {
     try {
         console.log(`[EMERGENCY LOG] Processing alert for User: ${userId}`);
@@ -171,38 +182,51 @@ exports.sendMessage = async (req, res) => {
         const { chatId } = req.params;
         const { message, latitude, longitude } = req.body;
         const userId = req.user.id;
+        const EMERGENCY_THRESHOLD = 30; // Trigger SMS below this
 
-        // --- Auth Check ---
-        const chatCheck = await pool.query("SELECT id FROM chats WHERE id = $1 AND user_id = $2", [chatId, userId]);
-        if (chatCheck.rows.length === 0) return res.status(403).json({ error: "Unauthorized" });
+        // --- Step A: Get current health score from DB ---
+        const userRes = await pool.query("SELECT health_score FROM users WHERE id = $1", [userId]);
+        let currentScore = userRes.rows[0]?.health_score ?? 100;
 
-        // --- Save User Message ---
-        await pool.query("INSERT INTO messages (chat_id, role, content) VALUES ($1, $2, $3)", [chatId, 'user', message]);
+        // --- Step B: Get Emotion from Python Bridge ---
+        const pythonData = await analyzeWithPython(message);
+        const emotion = pythonData.debug_info?.detected_emotion || "neutral";
 
-        // --- Distress Check ---
+        // --- Step C: Update the Score ---
+        const impact = emotionScoreMap[emotion] || 0;
+        let newScore = Math.max(0, Math.min(100, currentScore + impact));
+
+        // Update the user's score in the database
+        await pool.query("UPDATE users SET health_score = $1 WHERE id = $2", [newScore, userId]);
+
+        // --- Step D: Emergency Logic ---
         const lowerCaseMessage = message.toLowerCase();
-        const isDistressed = distressKeywords.some(keyword => lowerCaseMessage.includes(keyword));
+        const hasDistressKeyword = distressKeywords.some(kw => lowerCaseMessage.includes(kw));
+        const isScoreCritical = newScore <= EMERGENCY_THRESHOLD;
 
-        let finalResponse = "";
+        let finalResponse = pythonData.reply;
 
-        if (isDistressed) {
-            // EMERGENCY FLOW
+        if (hasDistressKeyword || isScoreCritical) {
+            // Trigger the SMS function you already built
             await triggerEmergencySMS(userId, message, latitude, longitude);
-            finalResponse = "I am really sorry that you're going through something this painful right now. You don't have to handle this alone. If you're having thoughts about hurting yourself, it could help to reach out to someone who can support you in this moment — a trusted friend, family member, or a mental health professional.";
-        } else {
-            // NORMAL FLOW: Direct Python Bridge
-            const pythonData = await analyzeWithPython(message);
-            finalResponse = pythonData.reply;
+
+            // If the score is the only thing that triggered it, customize the reply
+            if (isScoreCritical && !hasDistressKeyword) {
+                finalResponse = "I've noticed things have been quite difficult for you lately. I've reached out to your support contact just to make sure you're okay. I'm right here with you.";
+            }
         }
 
-        // --- Save Assistant Response ---
+        // --- Step E: Save and Respond ---
+        await pool.query("INSERT INTO messages (chat_id, role, content) VALUES ($1, $2, $3)", [chatId, 'user', message]);
         await pool.query("INSERT INTO messages (chat_id, role, content) VALUES ($1, $2, $3)", [chatId, 'assistant', finalResponse]);
-        await pool.query("UPDATE chats SET updated_at = NOW() WHERE id = $1", [chatId]);
 
-        res.json({ reply: finalResponse });
+        res.json({
+            reply: finalResponse,
+            health_score: newScore // Useful for debugging or UI bars
+        });
 
     } catch (err) {
-        console.error(err.message);
-        res.status(500).json({ error: "Failed to send message" });
+        console.error("Scoring Error:", err.message);
+        res.status(500).json({ error: "Failed to process message" });
     }
 };
