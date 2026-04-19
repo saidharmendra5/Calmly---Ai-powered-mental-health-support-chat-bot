@@ -13,20 +13,20 @@ from nltk.stem import PorterStemmer
 
 app = Flask(__name__)
 
-# --- CONFIGURATION (UPDATED) ---
+# --- CONFIGURATION ---
 # New API URL structure
 API_URL = "https://router.huggingface.co/hf-inference/models/j-hartmann/emotion-english-distilroberta-base"
 
 # Get token
 HF_TOKEN = os.environ.get("HF_TOKEN") 
-# Fallback for local testing if env var isn't set (Replace with your actual token for local test)
+
 if not HF_TOKEN:
-    # prompt user or use a hardcoded string ONLY for local testing
+    
     print("⚠️ WARNING: HF_TOKEN not found in environment variables.")
 
 headers = {"Authorization": f"Bearer {HF_TOKEN}"}
 
-# ... (Rest of the code remains exactly the same) ...
+
 
 # --- NLTK SETUP ---
 try:
@@ -92,7 +92,7 @@ def get_smart_reply(text):
              emotion = top_emotion
         elif isinstance(api_response, dict) and "error" in api_response:
              print(f"HF API Error: {api_response['error']}")
-             # If model is loading, it sends an error. We fallback to neutral.
+             # If model is loading, it sends an error. then it fallbacks to neutral.
     except Exception as e:
         print(f"Emotion Check Failed: {e}")
 
